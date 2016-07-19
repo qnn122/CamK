@@ -1,5 +1,18 @@
 function [curPoint,cP] = Detect_Fintip(skin,dis,ang)
+%% DETECT_FINTIP return positions of the fingertips
+%
+% In:
+%   skin:   binary image of the fingers
+%   dis:    
+%   ang:    
+%
+% Out:
+%   curPoint:
+%   cP: 
+%
+
 E = edge(uint8(skin),'Canny');
+
 CC = bwconncomp(E);     % find separate regions
 B={};
 C={};
@@ -15,7 +28,7 @@ for i = 1 : CC.NumObjects
     end
 end
 
-path = {};
+path = {};      % ???
 for i = 1 : nB
     K = B{i};
     mix = min(C{i}(:,1));
@@ -39,6 +52,11 @@ end
 %     end
 % end
 
+% If no finger contour (path) is found, terminate the function
+if isempty(path)
+    return
+end
+    
 
 curPoint = {};
 ncP = 0;

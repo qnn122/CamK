@@ -22,7 +22,7 @@ function varargout = simulation_gui(varargin)
 
 % Edit the above text to modify the response to help simulation_gui
 
-% Last Modified by GUIDE v2.5 15-Jul-2016 14:02:48
+% Last Modified by GUIDE v2.5 20-Jul-2016 00:57:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -80,12 +80,16 @@ function btn_browse_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get new video file
-filename = uigetfile({'*.*','All Files' });
+[filename, path] = uigetfile({'*.*','All Files' });
 set(handles.text_filename, 'String', filename);
+if filename == 0
+    msgbox('No file chosen', 'Warning: no file selected')
+    return
+end
 
 % Loading video
 set(handles.text_status, 'String', 'Loading video... Please wait')
-handles.v = VideoReader('2016_05_28_15_05_34_video.mp4');
+handles.v = VideoReader([path,filename]);
 handles.nFrames = handles.v.NumberOfFrames;
 handles.vidH = handles.v.Height;
 handles.vidW = handles.v.Width;
@@ -136,15 +140,10 @@ imshow(I, 'Parent', handles.axes_rawimage);
 
 % ========================= Process image ===============================
 set(handles.text_status, 'String', 'Processing ...');
-[Ori_GrK, curPoint] = fingertipdetection(I);
+offset = str2double(get(handles.edit_offset, 'String'));
+% Detect fingertips and show them
+[Ori_GrK, curPoint] = fingertipdetection(I, offset);
 
-% Show resultant image
-imshow(Ori_GrK, 'Parent', handles.axes_outimage);
-% hold on
-% for i = 1 : length(curPoint)
-%     plot(curPoint{i}(:,2),curPoint{i}(:,1),'*');
-% end
-% hold off
 set(handles.text_status, 'String', 'Done');
 
 % --- Executes during object creation, after setting all properties.
@@ -173,6 +172,30 @@ set(handles.slider_framenum, 'Value', str2double(get(hObject, 'String')));
 % --- Executes during object creation, after setting all properties.
 function edit_framenum_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to edit_framenum (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_offset_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_offset (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_offset as text
+%        str2double(get(hObject,'String')) returns contents of edit_offset as a double
+offset = str2double(get(hObject, 'String'));
+[Ori_GrK, curPoint] = fingertipdetection(I, offset);
+
+% --- Executes during object creation, after setting all properties.
+function edit_offset_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_offset (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
