@@ -58,7 +58,7 @@ if isempty(path)
 end
     
 
-curPoint = {};
+curPoint = zeros(length(path), 2);
 ncP = 0;
 for i = 1 : length(path)
     number = FindCurve(path{i},dis,ang);
@@ -67,7 +67,7 @@ for i = 1 : length(path)
         temp = path{i}(a,:);
         [a,b] = max(temp(:,1));
         ncP = ncP + 1;
-        curPoint{ncP} = temp(b,:);
+        curPoint(i, :) = temp(b,:); 
         cP{i} = temp;
     end
 end

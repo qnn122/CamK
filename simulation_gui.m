@@ -128,6 +128,12 @@ function slider_framenum_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+%
+persistent preCanddt curCanddt
+
+if isempty(preCanddt) preCanddt = zeros(1,2); end
+if isempty(curCanddt) curCanddt = 100*ones(1,2); end    % 100: arbitrary large enough number
+
 % Get current frame
 curFrame = ceil(get(hObject, 'Value'));
 
@@ -141,10 +147,48 @@ imshow(I, 'Parent', handles.axes_rawimage);
 % ========================= Process image ===============================
 set(handles.text_status, 'String', 'Processing ...');
 offset = str2double(get(handles.edit_offset, 'String'));
+
 % Detect fingertips and show them
 [Ori_GrK, curPoint] = fingertipdetection(I, offset);
+if ~isscalar(curPoint)  % means fingertip detected
+    set(handles.text_fingertip, 'ForegroundColor', [1 0 0]);
+    
+    % ===== Keystroke Detection ====
+    % 1. Find candidate finger
+    preCanddt = curCanddt;
+    curCanddt = findCanddt(curPoint);
+    if isKeyStroke(curCanddt, preCanddt, 5)
+        set(handles.text_keystroke, 'ForegroundColor', [0.1 0.5 0.5])
+    else
+        set(handles.text_fingertip, 'ForegroundColor', [0.2 0.2 0.2]);
+    end
+else
+    set(handles.text_fingertip, 'ForegroundColor', [0.2 0.2 0.2]);
+end
 
 set(handles.text_status, 'String', 'Done');
+
+% -----------------------------------------------------
+function canddt = findCanddt(curPoint)
+% In:
+%   curPoint: cell containing all coordinates of fingertip
+% Out:
+%   canddit:  vector containing coordinate of candidate finger (lowest y)
+y = curPoint(:,1);
+if size(curPoint, 1) == 1
+    canddt = curPoint;
+else
+    canddt = curPoint(find(y== max(y)), :);
+end
+
+% -----------------------------------------------------
+function bol = isKeyStroke(curCanddt, preCanddt, delta_r)
+    term = sum((curCanddt - preCanddt).^2);
+    if term <= delta_r
+        bol = 1;
+    else
+        bol = 0;
+    end
 
 % --- Executes during object creation, after setting all properties.
 function slider_framenum_CreateFcn(hObject, eventdata, handles)
