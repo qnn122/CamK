@@ -1,15 +1,10 @@
-function in = MaskKb(Point, offset, W, H)
+function in = MaskKb(Point, offset, W, H)   % 0.178 s
 %% Rerturn binary image
 % 1 : inside keyboard polygon
 % 0: otherwise
 
-xq = [];
-for i = 1 : W;
-    xq = [xq [offset+1:H]'];
-end
-yq = [];
-for i = 1 : (H-offset);
-    yq = [yq;[1:W]];
-end
+xq = repmat([offset+1:H]', 1, W);
+
+yq = repmat(1:W, H-offset, 1);
 
 in = inpolygon(xq,yq,Point(:,1),Point(:,2));

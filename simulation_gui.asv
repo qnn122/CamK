@@ -310,24 +310,9 @@ function bol = isKeyStroke(curCanddt, preCanddt, delta_r)
     end
   
 % -------------------------------------------------------
-% TODO: Generalize this function, determine keyboard from the calibration
-% process
-function K = loadkeyboard()
-try 
-    K_temp = load('Key_Struct');
-catch e
-    if strcmp(e.identifier, 'MATLAB:load:couldNotReadFile')
-        errordlg('Could not found the keyboard layout')
-    end
-end
-K = K_temp.K;
-
-% -------------------------------------------------------
 function setKeyboard()
 global S_avg
-global K
-
-K = loadkeyboard();
+keyboard = load Key_Struct
 
 % Find S_avg as Average size of key area
 if ~exist(S_avg)

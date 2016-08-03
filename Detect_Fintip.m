@@ -1,4 +1,4 @@
-function [curPoint,cP] = Detect_Fintip(skin,dis,ang)
+function [curPoint,cP] = Detect_Fintip(skin,dis,ang)    % 0.135 s
 %% DETECT_FINTIP return positions of the fingertips
 %
 % In:
@@ -14,22 +14,27 @@ function [curPoint,cP] = Detect_Fintip(skin,dis,ang)
 E = edge(uint8(skin),'Canny');
 
 CC = bwconncomp(E);     % find separate regions
-B={};
-C={};
-nB = 0;
+
+% If no finger contour is found, terminate the function
+nObj = CC.NumObject;
+if nObj == 0
+    return
+end
+
+B = cell(nObj);
+C = cell(nObj);
 for i = 1 : CC.NumObjects
     PixId = CC.PixelIdxList{i};
     if (length(PixId >= 50))    % highly likely (a) finger(s)
         [x,y] = ind2sub(size(E), PixId);
         K = E(min(x):max(x),min(y):max(y)); % Rect region surrounds the detected obj
-        nB = nB + 1;
-        B{nB} = K;
-        C{nB} = [x,y];    % Unordered boundary of the obj           
+        B{i} = K;          % size is arbitrary
+        C{i} = [x,y];      % Unordered boundary of the obj, size: arbitrary       
     end
 end
 
-path = {};      % ???
-for i = 1 : nB
+path = cell(nObj);
+for i = 1 : nObj
     K = B{i};
     mix = min(C{i}(:,1));
     miy = min(C{i}(:,2));
@@ -53,13 +58,12 @@ end
 % end
 
 % If no finger contour (path) is found, terminate the function
-if isempty(path)
-    return
-end
+% if isempty(path)
+%     return
+% end
     
-
 curPoint = zeros(length(path), 2);
-ncP = 0;
+cP = cell(nObj);
 for i = 1 : length(path)
     number = FindCurve(path{i},dis,ang);
     a = find(number);
