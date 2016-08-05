@@ -1,4 +1,4 @@
-function [Ori_GrK, curPoint] = fingertipdetection(I, offset)
+function [Ori_GrK, curPoint, Ori_ClK] = fingertipdetection(I, offset)
 [H, W, C] = size(I);
 % tic;
 % Detect finger tip and plot
