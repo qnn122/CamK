@@ -1,9 +1,9 @@
 function key = keydetection(im, X, K, r)
 % KEYDETECTION determine which key in the keyboard the X is putting on
 % given the frame image 'im'. If no key found, the function return -1.
-% 
+%
 % In:
-%   im:         current rgb image 
+%   im:         current rgb image
 %   X <1x2>:    Cartesian coordinate of the finger, [x, y], anchor =
 %   K <1xn cell>: keyboard layout with n keys, field including
 %           td <5x2 double>: coordinates of 4 corners and the center point
@@ -11,7 +11,7 @@ function key = keydetection(im, X, K, r)
 %           area : key area (double)
 %   Optional:
 %   r   : delta r - radius of circle
-%   
+%
 % Out:
 %   key <char> : key name
 %
@@ -44,20 +44,27 @@ if isempty(New_CK)
     key = -1;
 else
     numkey = length(New_CK);
-    p = zeros(numkey, 1);
-    for j = 1:numkey
-        p(j) = Cal_cover_ratio(New_CK(j), Skin, K, S_avg);
-    end
-    vt = find(p > thres);
-    if isempty(vt)
-        disp('Nothing for coverage ratio');
-        key = -1;
-    else
-        % find key have maxi value of p
-        p_max = max(p);
-        vt = find(p==p_max);
-        name = Key_name(K{New_CK(vt)}.name);
+    if numkey == 1
+        name = Key_name(K{New_CK(numkey)}.name);
         disp(['Pressed key is : ' name]);
-        k = name;
+        key = name;
+    else
+        disp('Calculate coverage ratio');
+        p = zeros(numkey, 1);
+        for j = 1:numkey
+            p(j) = Cal_cover_ratio(New_CK(j), Skin, K, S_avg);
+        end
+        vt = find(p > thres);
+        if isempty(vt)
+            disp('Nothing for coverage ratio');
+            key = -1;
+        else
+            % find key have maxi value of p
+            p_max = max(p);
+            vt = find(p==p_max);
+            name = Key_name(K{New_CK(vt)}.name);
+            disp(['Pressed key is : ' name]);
+            key = name;
+        end
     end
 end
