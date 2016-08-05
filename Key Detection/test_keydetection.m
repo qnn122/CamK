@@ -10,22 +10,20 @@ im_temp = load('Key_Area');
 im = im_temp.Ori_ClK;
 
 % Coordinate of fingertip
-X = [68, 655];              % H key
-
-% Click to get Coordinate if user want
-% imshow(im);
-% [y,x] = getpts(); % Press enter right after clicked
-% close all
-% 
-% 
-% % show clicked point
-% imshow(im); hold on;
-% plot(y,x,'r*');
-% pause; close all;
-% 
-% X = round([x,y]);
-
-%
+hf = figure();
+ht = uicontrol('Style', 'text', 'String', '-1', ...
+                'Units', 'normalized', 'Position', [0.45 0.8 0.1 0.1],...
+                'FontSize', 20, 'ForegroundColor', 'b');
 r = 5;
-key = keydetection(im, X, K, r);
-disp(key);
+imshow(im)
+x = 0;
+while x >= 0    % Click outside of the axes (left side to break)
+    [x,y] = ginput(1)
+    key = keydetection(im, [y,x], K, r);
+    if key == -1
+        set(ht, 'String', '-1')
+    else
+        set(ht, 'String', key)
+    end
+end
+
