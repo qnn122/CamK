@@ -22,7 +22,7 @@ function varargout = simulation_gui(varargin)
 
 % Edit the above text to modify the response to help simulation_gui
 
-% Last Modified by GUIDE v2.5 24-Jul-2016 22:59:23
+% Last Modified by GUIDE v2.5 05-Aug-2016 17:24:37
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -54,6 +54,13 @@ function simulation_gui_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for simulation_gui
 handles.output = hObject;
+
+% Load radius
+setKeyboard();
+global r % TODO: place this one on a more appropriate place
+r = 5;
+
+addpath('./Key Detection')
 
 % Update handles structure
 guidata(hObject, handles);
@@ -116,6 +123,13 @@ set(handles.slider_framenum, 'Min', 1,...
                  
 imshow(handles.mov(get(handles.slider_framenum, 'Value')).cdata, 'Parent', handles.axes_rawimage);
         
+
+% Set up keyboard layout
+global K
+I = handles.mov(17).cdata;   % frame no.17 seem to be good, mannual selection
+offset = str2double(get(handles.edit_offset, 'String'));
+%[Ori_GrK, curPoint, Ori_ClK] = fingertipdetection(I, offset); % TODO: Need shorter way, this is temporary
+%K = loadkeyboard(Ori_ClK);
 % Update handles
 guidata(hObject, handles);
 
@@ -244,6 +258,9 @@ guidata(hObject, handles);
 function handles = singleframe_processing(handles, curFrame)
 persistent preCanddt curCanddt
 
+global K
+global r
+
 if isempty(preCanddt) preCanddt = zeros(1,2); end
 if isempty(curCanddt) curCanddt = 100*ones(1,2); end    % 100: arbitrary large enough number
 
@@ -259,8 +276,8 @@ imshow(I, 'Parent', handles.axes_rawimage);
 set(handles.text_status, 'String', 'Processing ...');
 offset = str2double(get(handles.edit_offset, 'String'));
 
-% Detect fingertips and show them
-[Ori_GrK, curPoint] = fingertipdetection(I, offset); % Significant cost = 0.35-0.38s
+% ====== Fingertip detection ====
+[Ori_GrK, curPoint, Ori_ClK] = fingertipdetection(I, offset); % Significant cost = 0.35-0.38s
 if ~isscalar(curPoint)  % means fingertip detected
     set(handles.text_fingertip, 'ForegroundColor', [1 0 0]);
     
@@ -269,13 +286,29 @@ if ~isscalar(curPoint)  % means fingertip detected
     preCanddt = curCanddt;
     curCanddt = findCanddt(curPoint);
     if isKeyStroke(curCanddt, preCanddt, 5)
+        disp(' ====== KeyStroke detected ====')
         set(handles.text_keystroke, 'ForegroundColor', [0.1 0.5 0.5])
+        % Which key has been pressed
+        curPoint
+        try
+            key = keydetection(Ori_ClK, curPoint, K, r);
+            if key == -1
+                set(handles.text_key, 'String', '-1', 'ForegroundColor', [0.2 0.2 0.2])
+            else
+                set(handles.text_key, 'String', key, 'ForegroundColor', [1 0 0])
+                pause(0.5)
+            end
+        catch e
+            e
+        end
     else
         set(handles.text_keystroke, 'ForegroundColor', [0.2 0.2 0.2]);
     end
 else
     set(handles.text_fingertip, 'ForegroundColor', [0.2 0.2 0.2]);
 end
+
+set(handles.text_key, 'String', 'None', 'ForegroundColor', [0.2 0.2 0.2])
 
 set(handles.text_status, 'String', 'Done');
 
@@ -312,15 +345,21 @@ function bol = isKeyStroke(curCanddt, preCanddt, delta_r)
 % -------------------------------------------------------
 % TODO: Generalize this function, determine keyboard from the calibration
 % process
-function K = loadkeyboard()
+function K = loadkeyboard(Ori_ClK)
 try 
-    K_temp = load('Key_Struct');
+    Key_Struct = load('Key_Struct');
 catch e
-    if strcmp(e.identifier, 'MATLAB:load:couldNotReadFile')
-        errordlg('Could not found the keyboard layout')
-    end
+    warning('Something wrong but we skip it')
 end
-K = K_temp.K;
+K = Key_Struct.K;
+
+function K = loadkeyboard_temp(Ori_ClK)
+try 
+    Key_Struct = keyboard_template(Ori_ClK);
+catch e
+    warning('Something wrong but we skip it')
+end
+K = Key_Struct.K;
 
 % -------------------------------------------------------
 function setKeyboard()
@@ -330,7 +369,7 @@ global K
 K = loadkeyboard();
 
 % Find S_avg as Average size of key area
-if ~exist(S_avg)
+if ~isempty(S_avg)
     S_avg = 0;
     for i = 1 : length(K)
         S_avg = S_avg + K{i}.area;
