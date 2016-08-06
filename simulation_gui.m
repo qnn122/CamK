@@ -116,6 +116,9 @@ end
 close(hwb);
 set(handles.text_status, 'String', 'Done')
 
+% Write the movie structure to workspace 
+assignin('base', 'mov', handles.mov);
+
 % Set up slider
 set(handles.slider_framenum, 'Min', 1,...
                      'Max', handles.nFrames', ...
@@ -126,10 +129,17 @@ imshow(handles.mov(get(handles.slider_framenum, 'Value')).cdata, 'Parent', handl
 
 % Set up keyboard layout
 global K
-I = handles.mov(17).cdata;   % frame no.17 seem to be good, mannual selection
+%I = handles.mov(17).cdata;   % frame no.17 seem to be good, mannual selection
 offset = str2double(get(handles.edit_offset, 'String'));
 %[Ori_GrK, curPoint, Ori_ClK] = fingertipdetection(I, offset); % TODO: Need shorter way, this is temporary
 %K = loadkeyboard(Ori_ClK);
+
+% Determine keyboard mask
+global kbmask
+I = handles.mov(100).cdata;
+kbmask = extract_kbmask(I, offset);
+
+
 % Update handles
 guidata(hObject, handles);
 
@@ -277,7 +287,8 @@ set(handles.text_status, 'String', 'Processing ...');
 offset = str2double(get(handles.edit_offset, 'String'));
 
 % ====== Fingertip detection ====
-[Ori_GrK, curPoint, Ori_ClK] = fingertipdetection(I, offset); % Significant cost = 0.35-0.38s
+global kbmask
+[curPoint, Ori_ClK] = fingertipdetection_onkb(I, kbmask); % Significant cost = 0.35-0.38s
 if ~isscalar(curPoint)  % means fingertip detected
     set(handles.text_fingertip, 'ForegroundColor', [1 0 0]);
     
