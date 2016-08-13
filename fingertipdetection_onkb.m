@@ -1,25 +1,8 @@
-function [Ori_GrK, curPoint, Ori_ClK] = fingertipdetection(I, offset)
-% FINGERTIPDETECTION localized fingertips (if any) in an image and return
-% the their positions and plot them along with the original image
-%
-% In:
-%   I <m x n x 3>   : a RGB image
-%   offset          : the vertical segment that will be cut off from the
-%                       original image
-
-[H, W, C] = size(I);
-% tic;
-% Detect finger tip and plot
-M_td1 = zeros(offset, W);
-M_td2 = ones(H - offset, W);
-M_td = [M_td1; M_td2];
-
-%tElapsed_fgtdtn_in = toc      % max = 0.007 --> not signi
+function [curPoint, Ori_ClK] = fingertipdetection_onkb(I, kbmask)
+% FINGERTIPDETECTION_ONKB localize fingertips provi?e by a keyboard mask
 
 % ======== Extract keyboard area ... =========
-[Point, mask] = MakePoint(I, M_td); ...(based on 4 circles)
-in = MaskKb(Point, offset, W, H);
-[Ori_GrK, Ori_ClK] = AreaKb(I, in);
+[Ori_GrK, Ori_ClK] = AreaKb(I, kbmask);
 %tElapsed_fgtdtn_in = toc       % 0.23 - 0.3s
 
 % ======== Skin - hand segmentation ===========
