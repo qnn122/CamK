@@ -1,13 +1,15 @@
-function [GrK,ClK] = AreaKb(I, in, offset) 
+function [GrK,ClK] = AreaKb(I, in) 
 %% AREAKB returns ....
 % In:
-% 	I:	raw image
-% 	in:	binary keyboard area
+% 	I <m x n x 3>:  a RGBraw image
+% 	in :    binary keyboard area
 %
 % Out:
 % 	GrK: Gray keyboard
 %	Clk: Color keyboard
 % See also: imshow
+
+offset = size(I, 1) - size(in, 1);
 Gr = rgb2gray(I);
-GrK = Gr(size(I,1)-offset+1:size(I,1),:).*uint8(in);
-ClK = I(size(I,1)-offset+1:size(I,1),:,:).*repmat(uint8(in),[1,1,3]);
+GrK = Gr(offset+1:size(I,1),:).*uint8(in);
+ClK = I(offset+1:size(I,1),:,:).*repmat(uint8(in),[1,1,3]);
