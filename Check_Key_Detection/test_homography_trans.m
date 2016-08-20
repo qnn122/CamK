@@ -14,13 +14,13 @@ M_td2 = ones(offset,size(Frame,2));
 M_td = [M_td1;M_td2]; % Create mask
 
 % Find Point and Mask
-[newPoints, mask] = MakePoint(Frame,M_td);
+[LayoutPoints, mask] = MakePoint(Frame,M_td);
 % Fill Polygon
-in = MaskKb(newPoints,offset,size(Frame,2),size(Frame,1));
+in = MaskKb(LayoutPoints,offset,size(Frame,2),size(Frame,1));
 % Find Keyboard base on in-mask
-[Ori_GrK,Ori_ClK] = AreaKb(Frame,in,offset);
+[Ori_GrK,Ori_ClK] = AreaKb(Frame,in);
 
-%% ===============  Decide area of Original keyboard =======================
+%% ===============  Decide area of Frame keyboard =======================
 Frame_temp = load('KeyBoard.mat');
 % Cut frame
 firstportion = 0.35; % portion of detect (from bottom up)
@@ -36,14 +36,14 @@ M_td2 = ones(offset,size(Frame,2));
 M_td = [M_td1;M_td2]; % Create mask
 
 % Find Point and Mask
-[oldPoints, mask] = MakePoint(Frame,M_td);
+[FramePoints, mask] = MakePoint(Frame,M_td);
 % Fill Polygon
-in = MaskKb(oldPoints, offset,size(Frame,2),size(Frame,1));
+in = MaskKb(FramePoints, offset,size(Frame,2),size(Frame,1));
 % Find Keyboard base on in-mask
-[mappedOri_GrK, mappedOri_ClK] = AreaKb(Frame,in,offset);
+[mappedOri_GrK, mappedOri_ClK] = AreaKb(Frame,in);
 
 %% Find transformation coeff
-F = findcoefhomotrans(oldPoints, newPoints);
+F = findcoefhomotrans(FramePoints, LayoutPoints);
 
 % Visualization
 hf1 = figure();

@@ -55,12 +55,16 @@ function simulation_gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for simulation_gui
 handles.output = hObject;
 
+% Adding dependencies' path
+disp('Adding path ...')
+addpath(genpath('./Check_Key_Detection')); 
+addpath('./Key Detection');
+disp('Done');
+
 % Load radius
-setKeyboard();
+setKeyboard(handles);
 global r % TODO: place this one on a more appropriate place
 r = 5;
-
-addpath('./Key Detection')
 
 % Update handles structure
 guidata(hObject, handles);
@@ -356,28 +360,38 @@ function bol = isKeyStroke(curCanddt, preCanddt, delta_r)
 % -------------------------------------------------------
 % TODO: Generalize this function, determine keyboard from the calibration
 % process
-function K = loadkeyboard(Ori_ClK)
-try 
-    Key_Struct = load('Key_Struct');
-catch e
-    warning('Something wrong but we skip it')
-end
-K = Key_Struct.K;
+function K = loadkeyboard(handles)
+% ===============  Decide area of Original keyboard =======================
+layout = imread('Template_Keyboard.png');
+M_td = ones(size(rgb2gray(layout))); % Create mask
 
-function K = loadkeyboard_temp(Ori_ClK)
-try 
-    Key_Struct = keyboard_template(Ori_ClK);
-catch e
-    warning('Something wrong but we skip it')
-end
-K = Key_Struct.K;
+% Find Point and Mask
+[LayoutPoints, mask] = MakePoint(layout, M_td);
+
+
+% ===============  Decide area of Frame keyboard =======================
+Frame_temp = load('KeyBoard.mat');
+Frame = Frame_temp.Ori_ClK;
+
+% Some shit
+offset = str2double(get(handles.edit_offset, 'String'));
+M_td1 = zeros(size(Frame,1)-offset,size(Frame,2)); 
+M_td2 = ones(offset,size(Frame,2));
+M_td = [M_td1; M_td2]; % Create mask
+
+% Find Point and Mask
+[FramePoints, mask] = MakePoint(Frame, M_td);
+
+% ========= Determine new keyboard structure ============================
+K_Layout = load('Key_Struct_Layout.mat');
+K = Create_Key_Struct(LayoutPoints, FramePoints, 12, K_Layout.K);
 
 % -------------------------------------------------------
-function setKeyboard()
+function setKeyboard(handles)
 global S_avg
 global K
 
-K = loadkeyboard();
+K = loadkeyboard(handles);
 
 % Find S_avg as Average size of key area
 if ~isempty(S_avg)
