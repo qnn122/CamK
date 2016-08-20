@@ -388,7 +388,7 @@ K = Create_Key_Struct(LayoutPoints, FramePoints, 12, K_Layout.K);
 offset = str2double(get(handles.edit_offset, 'String'));
 for i = 1 : 64
     for j = 1 : 5
-        K{i}.td(j,1)=K{i}.td(j,1)-500;
+        K{i}.td(j,1)=K{i}.td(j,1)-offset;
     end
 end
 % -------------------------------------------------------
