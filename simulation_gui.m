@@ -385,7 +385,12 @@ M_td = [M_td1; M_td2]; % Create mask
 % ========= Determine new keyboard structure ============================
 K_Layout = load('Key_Struct_Layout.mat');
 K = Create_Key_Struct(LayoutPoints, FramePoints, 12, K_Layout.K);
-
+offset = str2double(get(handles.edit_offset, 'String'));
+for i = 1 : 64
+    for j = 1 : 5
+        K{i}.td(j,1)=K{i}.td(j,1)-offset;
+    end
+end
 % -------------------------------------------------------
 function setKeyboard(handles)
 global S_avg
@@ -394,7 +399,7 @@ global K
 K = loadkeyboard(handles);
 
 % Find S_avg as Average size of key area
-if ~isempty(S_avg)
+if isempty(S_avg)
     S_avg = 0;
     for i = 1 : length(K)
         S_avg = S_avg + K{i}.area;

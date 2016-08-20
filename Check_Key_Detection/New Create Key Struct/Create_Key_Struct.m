@@ -72,10 +72,12 @@ end
 H = homography(oP',nP');
 K = {};
 for i = 1 : 64
+    AP = zeros(4,2);
     for j = 1 : 4
-        P = homtrans(H,K_Layout{i}.td(j,:)');
-        K{i}.td(j,:) = [P(1) P(2)];
+        AP(j,:) = homtrans(H,K_Layout{i}.td(j,:)');
+        K{i}.td(j,:) = [AP(j,1) AP(j,2)];
     end
     K{i}.name = i;
     K{i}.area = polyarea(K{i}.td(:,1),K{i}.td(:,2));
+    K{i}.td(5,:) = [mean(AP(:,1)) mean(AP(:,2))];
 end
