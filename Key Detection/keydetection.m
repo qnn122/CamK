@@ -15,8 +15,8 @@ function key = keydetection(im, X, K, r)
 % Out:
 %   key <char> : key name
 %
-% Dependencies: Candidate_Key, Circle_Point, Circle_Filter,
-% Cal_cover_ratio, Key_name
+% Dependencies: Candidate_Key, Circle_Filter, Intersection,
+% Projection_Point, Min_Dist, Cal_cover_ratio, Key_name
 
 KB = rgb2gray(im);
 
@@ -36,15 +36,15 @@ thres = 0.25; % threshold for cover ratio. if cover > thres -> still candidate
 
 CK = Candidate_Key(X, K);     % find 4 nearest keys
 
-dist = zeros(4,1);
-for i = 1 : 4
-    dist(i) = norm(X - K{CK(i)}.td(5,:));
-end
-[gt,vt] = min(dist);
+% dist = zeros(4,1);
+% for i = 1 : 4
+%     dist(i) = norm(X - K{CK(i)}.td(5,:));
+% end
+% [gt,vt] = min(dist);
 % CP = Circle_Point(X, r, size(KB,1), size(KB,2)); % extend to circle
-% New_CK = Circle_filter(CK, CP, K);   % key containing fingertips (posible keys)
+New_CK = Circle_filter(CK, X, r, K);   % key containing fingertips (posible keys)
 
-New_CK = (CK(vt));
+% New_CK = (CK(vt));
 
 if isempty(New_CK)
     disp('Nothing here')
