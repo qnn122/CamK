@@ -22,7 +22,7 @@ function varargout = simulation_gui(varargin)
 
 % Edit the above text to modify the response to help simulation_gui
 
-% Last Modified by GUIDE v2.5 05-Aug-2016 17:24:37
+% Last Modified by GUIDE v2.5 26-Aug-2016 10:46:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -59,6 +59,7 @@ handles.output = hObject;
 disp('Adding path ...')
 addpath(genpath('./Check_Key_Detection')); 
 addpath('./Key Detection');
+% addpath('./New Demo');
 disp('Done');
 
 % Load radius
@@ -140,9 +141,8 @@ offset = str2double(get(handles.edit_offset, 'String'));
 
 % Determine keyboard mask
 global kbmask
-I = handles.mov(100).cdata;
+I = handles.mov(1).cdata;
 kbmask = extract_kbmask(I, offset);
-
 
 % Update handles
 guidata(hObject, handles);
@@ -245,13 +245,18 @@ if(strcmp(get(hObject,'String'),'Start'))
         fprintf('Frame no. %d\n', curFrame);
         try
             tic;
-            handles = singleframe_processing(handles, curFrame);
+            handles = singleframe_processing(handles, curFrame);    % Process a frame
+            if isfield(handles, 'h_idx')                                 % Update signal's index
+                idx = floor((curFrame/30)*100) + 65;
+                set(handles.h_idx, 'XData', [idx idx]);
+            end
             tElapsed = toc
             drawnow;
         catch e
             if strcmp(e.identifier, 'MATLAB:class:InvalidHandle')
                 return
             end
+            e
             disp('THE PROGRAM TERMINATED')
         end
     end
@@ -262,6 +267,7 @@ elseif (strcmp(get(hObject, 'String'), 'Play'))
     set(hObject, 'String', 'Pause');
     uiresume();
 end
+
 
 guidata(hObject, handles);
 
@@ -292,7 +298,7 @@ offset = str2double(get(handles.edit_offset, 'String'));
 
 % ====== Fingertip detection ====
 global kbmask
-[curPoint, Ori_ClK] = fingertipdetection_onkb(I, kbmask); % Significant cost = 0.35-0.38s
+[curPoint, Ori_ClK] = fingertipdetection_onkb(I, kbmask, handles.axes_outimage); % Significant cost = 0.35-0.38s
 if ~isscalar(curPoint)  % means fingertip detected
     set(handles.text_fingertip, 'ForegroundColor', [1 0 0]);
     
@@ -406,3 +412,50 @@ if isempty(S_avg)
     end
     S_avg = S_avg / (64 + 5 - 1);
 end
+
+
+% --- Executes on button press in btn_browsesig.
+function btn_browsesig_Callback(hObject, eventdata, handles)
+% hObject    handle to btn_browsesig (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get new signal file
+[filename, path] = uigetfile({'*.*','All Files' });
+set(handles.text_filesig, 'String', filename);
+if filename == 0
+    msgbox('No file chosen', 'Warning: no file selected')
+    return
+end
+
+set(handles.text_status, 'String', 'Loading signal... Please wait')
+sig = csvread([path,filename]);
+
+timestamp = sig(:,1); % timestamp of sensor signal
+sensor_x = sig(:,2); % use x_axis value
+
+% Detect peak
+peak = Pan_Tompkins(sensor_x,5); % detect peak
+
+% Normalize signal
+sensor_offremv = sensor_x - mean(sensor_x);
+sensor_norm = sensor_offremv./max(sensor_offremv);
+
+% Display
+plot(sensor_norm, 'r-', 'Parent', handles.axes_sig);
+hold on;
+stem(peak, 'g-', 'Parent', handles.axes_sig); 
+
+% Initializing sliding index
+idx = 1;
+h_idx = line([idx idx], [min(sensor_norm) 1.2], 'Color', [0.5 0.5 1], 'linewidth', 1.5, 'Parent', handles.axes_sig);
+hold off;
+axis tight
+
+
+% Update GUI
+set(handles.text_status, 'String', 'Done')
+handles.sig = sig;
+handles.idx = idx;
+handles.h_idx = h_idx;
+guidata(hObject, handles);

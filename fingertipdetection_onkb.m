@@ -1,4 +1,4 @@
-function [curPoint, Ori_ClK] = fingertipdetection_onkb(I, kbmask)
+function [curPoint, Ori_ClK] = fingertipdetection_onkb(I, kbmask, haxes)
 % FINGERTIPDETECTION_ONKB localize fingertips provi?e by a keyboard mask
 
 % ======== Extract keyboard area ... =========
@@ -10,7 +10,7 @@ Y1 = ycbcr(Ori_ClK);
 skin = medfilt2(Y1);
 
 % Plot segmented image. ready to be labeled (finger tip)
-imshow(Ori_GrK);
+imshow(Ori_GrK, 'Parent', haxes);
 
 %tElapsed_fgtdtn_in = toc       % significant = 0.3 - 0.3s
 
