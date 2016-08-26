@@ -27,11 +27,11 @@ function varargout = simulation_gui(varargin)
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @simulation_gui_OpeningFcn, ...
-                   'gui_OutputFcn',  @simulation_gui_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+    'gui_Singleton',  gui_Singleton, ...
+    'gui_OpeningFcn', @simulation_gui_OpeningFcn, ...
+    'gui_OutputFcn',  @simulation_gui_OutputFcn, ...
+    'gui_LayoutFcn',  [] , ...
+    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -57,12 +57,15 @@ handles.output = hObject;
 
 % Adding dependencies' path
 disp('Adding path ...')
-addpath(genpath('./Check_Key_Detection')); 
-addpath('./Key Detection');
+addpath(genpath('./rvctools'));
+addpath('./Fingertip_Detection');
+addpath('./Key_Detection');
+addpath('./KeyBoard_Detection');
+addpath('./Keystroke_Detection');
 disp('Done');
 
 % Load radius
-setKeyboard(handles);
+% setKeyboard(handles);
 global r % TODO: place this one on a more appropriate place
 r = 5;
 
@@ -74,7 +77,7 @@ guidata(hObject, handles);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = simulation_gui_OutputFcn(hObject, eventdata, handles) 
+function varargout = simulation_gui_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -109,8 +112,8 @@ handles.vidW = handles.v.Width;
 set(handles.text_status, 'String', 'Preallocating... It may take a while. Please wait')
 handles.mov(1:handles.nFrames) = ...
     struct('cdata', zeros(handles.vidH, handles.vidW, 3, 'uint8'), ...
-            'colormap', []);
-        
+    'colormap', []);
+
 % Read on frame at a time
 hwb = waitbar(0, 'Prellocating movie structure. Please wait ...');
 for i = 1:handles.nFrames
@@ -120,29 +123,39 @@ end
 close(hwb);
 set(handles.text_status, 'String', 'Done')
 
-% Write the movie structure to workspace 
+% Write the movie structure to workspace
 assignin('base', 'mov', handles.mov);
 
 % Set up slider
 set(handles.slider_framenum, 'Min', 1,...
-                     'Max', handles.nFrames', ...
-                     'Value', 1);
-                 
+    'Max', handles.nFrames', ...
+    'Value', 1);
+
 imshow(handles.mov(get(handles.slider_framenum, 'Value')).cdata, 'Parent', handles.axes_rawimage);
-        
+
+% Load CSV file
+CSV = csvread([path,filename(1:end-9),'acc.csv']);
+timestamp = CSV(:,1); % timestamp of sensor signal
+global Time_Sensor
+global sensor_x
+Time_Sensor = timestamp - timestamp(1);
+sensor_x = CSV(:,2); % use x_axis value
+disp('Load CSV successful');
+
 
 % Set up keyboard layout
-global K
+% global K
 %I = handles.mov(17).cdata;   % frame no.17 seem to be good, mannual selection
-offset = str2double(get(handles.edit_offset, 'String'));
+% offset = str2double(get(handles.edit_offset, 'String'));
 %[Ori_GrK, curPoint, Ori_ClK] = fingertipdetection(I, offset); % TODO: Need shorter way, this is temporary
 %K = loadkeyboard(Ori_ClK);
 
-% Determine keyboard mask
-global kbmask
-I = handles.mov(100).cdata;
-kbmask = extract_kbmask(I, offset);
+% Determine keyboard mask - fillmask
+% global kbmask
+% I = handles.mov(100).cdata;
+% kbmask = extract_kbmask(I, offset);
 
+setKeyboard(handles);
 
 % Update handles
 guidata(hObject, handles);
@@ -220,8 +233,10 @@ function edit_offset_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit_offset as text
 %        str2double(get(hObject,'String')) returns contents of edit_offset as a double
+
 offset = str2double(get(hObject, 'String'));
-[Ori_GrK, curPoint] = fingertipdetection(I, offset);
+% global I
+% [Ori_GrK, curPoint] = fingertipdetection(I, offset);
 
 
 % ******************** START/PLAY/PAUSE BUTTON ***************************
@@ -274,6 +289,8 @@ persistent preCanddt curCanddt
 
 global K
 global r
+global Time_Sensor
+global sensor_x
 
 if isempty(preCanddt) preCanddt = zeros(1,2); end
 if isempty(curCanddt) curCanddt = 100*ones(1,2); end    % 100: arbitrary large enough number
@@ -286,9 +303,10 @@ set(handles.slider_framenum, 'Value', curFrame);                     % slider
 I = handles.mov(curFrame).cdata;
 imshow(I, 'Parent', handles.axes_rawimage);
 
+
 % ========================= Process image ===============================
 set(handles.text_status, 'String', 'Processing ...');
-offset = str2double(get(handles.edit_offset, 'String'));
+% offset = str2double(get(handles.edit_offset, 'String'));
 
 % ====== Fingertip detection ====
 global kbmask
@@ -300,13 +318,13 @@ if ~isscalar(curPoint)  % means fingertip detected
     % 1. Find candidate finger
     preCanddt = curCanddt;
     curCanddt = findCanddt(curPoint);
-    if isKeyStroke(curCanddt, preCanddt, 5)
+    if isKeyStroke(Time_Sensor, sensor_x, curFrame)
         disp(' ====== KeyStroke detected ====')
         set(handles.text_keystroke, 'ForegroundColor', [0.1 0.5 0.5])
         % Which key has been pressed
         curPoint
         try
-            key = keydetection(Ori_ClK, curPoint, K, r);
+            key = keydetection(Ori_ClK, curCanddt, K, r);
             if key == -1
                 set(handles.text_key, 'String', '-1', 'ForegroundColor', [0.2 0.2 0.2])
             else
@@ -343,54 +361,58 @@ else
 end
 
 % -----------------------------------------------------
-function bol = isKeyStroke(curCanddt, preCanddt, delta_r)
-    % In case there are more than 1 finger detected, skip
-    if size(curCanddt, 1) == 2
+function bol = isKeyStroke(Time_Sensor, sensor_x, curFrame)
+% In case there are more than 1 finger detected, skip
+% Find Timestamp
+Win_Size = 5;
+Fps = 30;
+if curFrame>=2
+    Time_Frame = (curFrame - 1)/Fps*1000; % time in sensor (by milisecond)
+    temp = Time_Sensor - Time_Frame;
+    pos = min(find(temp>0)); % find timestamp of sensor at that Frame
+    data_sensor = sensor_x(pos - Win_Size : pos); % choose data sensor in that range
+    peak = Pan_Tompkins(data_sensor,Win_Size); % detect peak
+    if isempty(find(peak)) % not keystroke
         bol = 0;
-        return
-    end
-    
-    term = sum((curCanddt - preCanddt).^2);
-    if term <= delta_r
+    else %keystroke
         bol = 1;
-    else
-        bol = 0;
     end
-  
+end
+
 % -------------------------------------------------------
 % TODO: Generalize this function, determine keyboard from the calibration
 % process
 function K = loadkeyboard(handles)
-% ===============  Decide area of Original keyboard =======================
-layout = imread('Template_Keyboard.png');
-M_td = ones(size(rgb2gray(layout))); % Create mask
-
-% Find Point and Mask
-[LayoutPoints, mask] = MakePoint(layout, M_td);
-
+% ===============  Load information of Original keyboard =======================
+K_Layout = load ('Key_Struct_Layout.mat');
+K_Layout = K_Layout.K;
+LayoutPoints = K_Layout{65};
+K_Layout = K_Layout(1:64);
 
 % ===============  Decide area of Frame keyboard =======================
 Frame_temp = load('KeyBoard.mat');
-Frame = Frame_temp.Ori_ClK;
+Frame = Frame_temp.KeyBoard_Frame;
 
 % Some shit
-offset = str2double(get(handles.edit_offset, 'String'));
-M_td1 = zeros(size(Frame,1)-offset,size(Frame,2)); 
-M_td2 = ones(offset,size(Frame,2));
-M_td = [M_td1; M_td2]; % Create mask
+offset = 280;
+%offset = str2double(get(handles.edit_offset, 'String'));
+% M_td1 = zeros(size(Frame,1)-offset,size(Frame,2));
+% M_td2 = ones(offset,size(Frame,2));
+% M_td = [M_td1; M_td2]; % Create mask
 
 % Find Point and Mask
-[FramePoints, mask] = MakePoint(Frame, M_td);
+global kbmask
+[FramePoints, mask, kbmask] = MakePoint(Frame, offset);
 
 % ========= Determine new keyboard structure ============================
-K_Layout = load('Key_Struct_Layout.mat');
-K = Create_Key_Struct(LayoutPoints, FramePoints, 12, K_Layout.K);
-offset = str2double(get(handles.edit_offset, 'String'));
+K = Create_Key_Struct(LayoutPoints, FramePoints, 12, K_Layout);
+% offset = str2double(get(handles.edit_offset, 'String'));
 for i = 1 : 64
     for j = 1 : 5
-        K{i}.td(j,1)=K{i}.td(j,1)-offset;
+        K{i}.td(j,1)=K{i}.td(j,1)-size(Frame,1)+offset;
     end
 end
+disp('Done');
 % -------------------------------------------------------
 function setKeyboard(handles)
 global S_avg

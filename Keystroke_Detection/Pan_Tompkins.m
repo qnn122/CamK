@@ -21,9 +21,9 @@ while i <= length(data)
     i = i + 1;
 end
 % Plot result
-figure;
-subplot(5,1,1), plot(data);
-subplot(5,1,2), plot(ydiff, 'g-');
-subplot(5,1,3), plot(yint, 'k-');
-subplot(5,1,4), plot(yid, 'r-');
-subplot(5,1,5), plot(peak, 'r-');
+% figure;
+% subplot(5,1,1), plot(data);
+% subplot(5,1,2), plot(ydiff, 'g-');
+% subplot(5,1,3), plot(yint, 'k-');
+% subplot(5,1,4), plot(yid, 'r-');
+% subplot(5,1,5), plot(peak, 'r-');
