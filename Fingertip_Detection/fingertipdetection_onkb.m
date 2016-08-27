@@ -6,7 +6,7 @@ function [curPoint, Ori_ClK] = fingertipdetection_onkb(I, kbmask, haxes)
 %tElapsed_fgtdtn_in = toc       % 0.23 - 0.3s
 
 % ======== Skin - hand segmentation ===========
-Y1 = ycbcr(Ori_ClK);
+Y1 = kovac(Ori_ClK);
 skin = medfilt2(Y1);
 
 % Plot segmented image. ready to be labeled (finger tip)

@@ -7,7 +7,8 @@ function K = Create_Key_Struct(LayoutPoints, FramePoints, npts, K_Layout)
 % Output
 %   K : <struct> Key struct of Video Frame
 %       td : 4 coordinate - name : 1 -> 64 - area : key's area
-% Note : Remember load Key Struct Layout before run this function
+% Note : Remember load Key Struct Layout before run this function and set
+% path for 2 folders
 
 LP = LayoutPoints;
 UP = FramePoints;
@@ -23,7 +24,7 @@ UP(2,:) = G;
 % adjust Inf Point 2
 
 AD = UP(4,:) - UP(1,:);
-ratio = 0.97;
+ratio = 0.96;
 AE = AD * ratio;
 D = AE + UP(1,:);
 UP(4,:) = D;
@@ -34,7 +35,7 @@ F = BF + UP(2,:);
 UP(3,:) = F;
 oP = LP;nP = UP;
 
-if npts >=8 8
+if npts >=8 
     % find 4 mid point
     P1 = zeros(4,2);
     P2 = zeros(4,2);

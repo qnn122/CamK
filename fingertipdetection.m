@@ -10,15 +10,14 @@ function [Ori_GrK, curPoint, Ori_ClK] = fingertipdetection(I, offset)
 [H, W, C] = size(I);
 % tic;
 % Detect finger tip and plot
-M_td1 = zeros(offset, W);
-M_td2 = ones(H - offset, W);
-M_td = [M_td1; M_td2];
+% M_td1 = zeros(offset, W);
+% M_td2 = ones(H - offset, W);
+% M_td = [M_td1; M_td2];
 
 %tElapsed_fgtdtn_in = toc      % max = 0.007 --> not signi
 
 % ======== Extract keyboard area ... =========
-[Point, mask] = MakePoint(I, M_td); ...(based on 4 circles)
-in = MaskKb(Point, offset, W, H);
+[Point, mask, in] = MakePoint(I, offset); ...(based on 4 circles)
 [Ori_GrK, Ori_ClK] = AreaKb(I, in);
 %tElapsed_fgtdtn_in = toc       % 0.23 - 0.3s
 
