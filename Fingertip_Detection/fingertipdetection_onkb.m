@@ -27,11 +27,11 @@ catch e
     return
 end
     
-hold on
-% Plot fingertip
-for i = 1 : length(curPoint)
-    plot(curPoint(:,2),curPoint(:,1),'*', ... % 2: y, 1:x
-        'MarkerSize', 12)
-end
-hold off
+% hold on
+% % Plot fingertip
+% for i = 1 : length(curPoint)
+%     plot(curPoint(:,2),curPoint(:,1),'*', ... % 2: y, 1:x
+%         'MarkerSize', 12)
+% end
+% hold off
 disp('=== fingertip detected ===')

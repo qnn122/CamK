@@ -55,6 +55,8 @@ function simulation_gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for simulation_gui
 handles.output = hObject;
 
+handles.resultstr = '';
+
 % Adding dependencies' path
 disp('Adding path ...')
 addpath(genpath('./rvctools'));
@@ -335,6 +337,14 @@ if ~isscalar(curPoint)  % means fingertip detected
                 set(handles.text_key, 'String', '-1', 'ForegroundColor', [0.2 0.2 0.2])
             else
                 set(handles.text_key, 'String', key, 'ForegroundColor', [1 0 0])
+                % Display resulted string
+                if strcmp(key, 'Spa')
+                    handles.resultstr = horzat(handles.resultstr, ' ');
+                else
+                    handles.resultstr = horzcat(handles.resultstr, upper(key));
+                end
+                set(handles.text_result, 'String', handles.resultstr);
+                
                 pause(0.5)
             end
         catch e
@@ -418,6 +428,19 @@ for i = 1 : 64
         K{i}.td(j,1)=K{i}.td(j,1)-size(Frame,1)+offset;
     end
 end
+
+% Display homography transform
+[H, W, C] = size(Frame);
+frac = Frame((H-offset+1):end, :, :);
+a = double(rgb2gray(frac)).*double((kbmask));
+figure; imshow(a, [])
+hold on
+for i = 1 : 64
+    key = K{i}.td(1:4,:);
+    fill(key(:,2), key(:,1), [1 0 0], 'facealpha', .5);
+end
+hold off
+
 disp('Done');
 % -------------------------------------------------------
 function setKeyboard(handles)
